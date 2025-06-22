@@ -1,5 +1,3 @@
-
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -8,6 +6,8 @@ import { User } from "@/api/entities";
 
 export default function Layout({ children, currentPageName }) {
   const [user, setUser] = React.useState(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [authError, setAuthError] = React.useState(null);
 
   React.useEffect(() => {
     loadUser();
@@ -15,20 +15,68 @@ export default function Layout({ children, currentPageName }) {
 
   const loadUser = async () => {
     try {
+      setIsLoading(true);
+      setAuthError(null);
       const userData = await User.me();
       setUser(userData);
     } catch (error) {
       console.error("Error loading user:", error);
+      
+      // Check if it's an authentication error
+      if (error.message?.includes('403') || error.message?.includes('logged in') || error.message?.includes('auth')) {
+        setAuthError('Please log in to access this application.');
+      } else {
+        setAuthError('Failed to load user data. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleLogout = async () => {
     try {
       await User.logout();
+      setUser(null);
+      setAuthError('Please log in to access this application.');
     } catch (error) {
       console.error("Error logging out:", error);
     }
   };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="flex h-screen bg-gray-100 items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show authentication error
+  if (authError && !user) {
+    return (
+      <div className="flex h-screen bg-gray-100 items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full mx-4">
+          <div className="text-center">
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-red-600 text-xl">!</span>
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Authentication Required</h2>
+            <p className="text-gray-600 mb-6">{authError}</p>
+            <button
+              onClick={loadUser}
+              className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const menuItems = [
     { name: "Dashboard", icon: LayoutDashboard, path: "Dashboard" },
@@ -107,4 +155,3 @@ export default function Layout({ children, currentPageName }) {
     </div>
   );
 }
-
