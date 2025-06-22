@@ -23,10 +23,12 @@ export default function Layout({ children, currentPageName }) {
       console.error("Error loading user:", error);
       
       // Check if it's an authentication error
-      if (error.message?.includes('403') || error.message?.includes('logged in') || error.message?.includes('auth')) {
-        setAuthError('Please log in to access this application.');
+      if (error.message?.includes("You must be logged in") || 
+          error.message?.includes("403") ||
+          error.response?.status === 403) {
+        setAuthError("Please log in to access this application.");
       } else {
-        setAuthError('Failed to load user data. Please try again.');
+        setAuthError("An error occurred while loading user data.");
       }
     } finally {
       setIsLoading(false);
@@ -37,7 +39,7 @@ export default function Layout({ children, currentPageName }) {
     try {
       await User.logout();
       setUser(null);
-      setAuthError('Please log in to access this application.');
+      setAuthError("Please log in to access this application.");
     } catch (error) {
       console.error("Error logging out:", error);
     }
@@ -64,11 +66,11 @@ export default function Layout({ children, currentPageName }) {
             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-red-600 text-xl">!</span>
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Authentication Required</h2>
-            <p className="text-gray-600 mb-6">{authError}</p>
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">Authentication Required</h2>
+            <p className="text-gray-600 mb-4">{authError}</p>
             <button
               onClick={loadUser}
-              className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
             >
               Try Again
             </button>
